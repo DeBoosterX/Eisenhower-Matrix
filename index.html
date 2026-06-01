@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eisenhower Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <h1>Eisenhower Matrix</h1>
+      <p class="subtitle">Prioritize what matters &middot; AI-powered by Gemini</p>
+    </div>
+    <div class="header-right">
+      <button class="btn-icon" id="btnStats" title="Stats">&#128202;</button>
+      <button class="btn-icon" id="btnArchive" title="Archived tasks">&#128194;</button>
+      <button class="btn-icon" id="btnExport" title="Export">&#128228;</button>
+      <button class="btn-icon" id="btnSearch" title="Search">&#128269;</button>
+    </div>
+  </header>
+
+  <!-- GEMINI API KEY BAR -->
+  <div class="apikey-bar glass" id="apikeyBar">
+    <span class="apikey-label">&#128273; Gemini API Key</span>
+    <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key for AI auto-sort..." autocomplete="off" />
+    <button class="btn-save" id="btnSaveKey">Save</button>
+    <button class="btn-icon-sm" id="btnClearKey" title="Clear key">&#10005;</button>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-bar glass" id="searchBar" style="display:none">
+    <span>&#128269;</span>
+    <input type="text" id="searchInput" placeholder="Search tasks..." />
+    <button class="btn-icon-sm" id="btnCloseSearch">&#10005;</button>
+  </div>
+
+  <!-- ADD TASK BAR -->
+  <div class="input-section glass">
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="Type a task... press Enter to add, or use AI Sort" maxlength="200" />
+      <button class="btn-ai" id="btnAI" title="AI auto-sort with Gemini">&#10024; AI Sort</button>
+      <button class="btn-add" id="btnAdd">+ Add</button>
+    </div>
+    <div class="input-meta">
+      <input type="date" id="taskDate" title="Due date" />
+      <select id="taskPriority" title="Priority">
+        <option value="1">&#11088; P1 Lowest</option>
+        <option value="2">&#11088;&#11088; P2 Low</option>
+        <option value="3" selected>&#11088;&#11088;&#11088; P3 Medium</option>
+        <option value="4">&#11088;&#11088;&#11088;&#11088; P4 High</option>
+        <option value="5">&#11088;&#11088;&#11088;&#11088;&#11088; P5 Critical</option>
+      </select>
+      <select id="taskTag" title="Label">
+        <option value="">No label</option>
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="health">Health</option>
+        <option value="finance">Finance</option>
+        <option value="study">Study</option>
+        <option value="project">Project</option>
+      </select>
+      <input type="text" id="taskNotes" placeholder="Notes (optional)" maxlength="300" />
+      <select id="taskQuadrant" title="Quadrant (manual)">
+        <option value="q1">Do First</option>
+        <option value="q2">Schedule</option>
+        <option value="q3">Delegate</option>
+        <option value="q4">Eliminate</option>
+      </select>
+    </div>
+    <div id="aiStatus" class="ai-status" style="display:none"></div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="work">Work</button>
+    <button class="filter-btn" data-filter="personal">Personal</button>
+    <button class="filter-btn" data-filter="health">Health</button>
+    <button class="filter-btn" data-filter="finance">Finance</button>
+    <button class="filter-btn" data-filter="study">Study</button>
+    <button class="filter-btn" data-filter="project">Project</button>
+    <button class="filter-btn" data-filter="overdue">Overdue</button>
+    <button class="filter-btn" data-filter="completed">Done</button>
+  </div>
+
+  <!-- MATRIX -->
+  <div class="matrix-wrapper">
+    
+    <div class="matrix" id="matrix">
+      <div class="quadrant q1" id="q1" data-q="q1">
+        <div class="q-header">
+          <div class="q-icon">&#128293;</div>
+          <div class="q-info">
+            <div class="q-title">Do First</div>
+            <div class="q-sub">Urgent + Important</div>
+          </div>
+          <div class="q-badge" id="badge-q1">0</div>
+        </div>
+        <div class="tasks-list" id="list-q1"></div>
+        <div class="drop-hint" id="hint-q1">Drop tasks here</div>
+      </div>
+
+      <div class="quadrant q2" id="q2" data-q="q2">
+        <div class="q-header">
+          <div class="q-icon">&#128197;</div>
+          <div class="q-info">
+            <div class="q-title">Schedule</div>
+            <div class="q-sub">Not Urgent + Important</div>
+          </div>
+          <div class="q-badge" id="badge-q2">0</div>
+        </div>
+        <div class="tasks-list" id="list-q2"></div>
+        <div class="drop-hint" id="hint-q2">Drop tasks here</div>
+      </div>
+
+      <div class="quadrant q3" id="q3" data-q="q3">
+        <div class="q-header">
+          <div class="q-icon">&#129309;</div>
+          <div class="q-info">
+            <div class="q-title">Delegate</div>
+            <div class="q-sub">Urgent + Not Important</div>
+          </div>
+          <div class="q-badge" id="badge-q3">0</div>
+        </div>
+        <div class="tasks-list" id="list-q3"></div>
+        <div class="drop-hint" id="hint-q3">Drop tasks here</div>
+      </div>
+
+      <div class="quadrant q4" id="q4" data-q="q4">
+        <div class="q-header">
+          <div class="q-icon">&#128465;&#65039;</div>
+          <div class="q-info">
+            <div class="q-title">Eliminate</div>
+            <div class="q-sub">Not Urgent + Not Important</div>
+          </div>
+          <div class="q-badge" id="badge-q4">0</div>
+        </div>
+        <div class="tasks-list" id="list-q4"></div>
+        <div class="drop-hint" id="hint-q4">Drop tasks here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS MODAL -->
+  <div class="modal-overlay" id="statsOverlay" style="display:none">
+    <div class="modal glass" id="statsPanel">
+      <div class="modal-header">
+        <h2>Task Statistics</h2>
+        <button class="btn-icon-sm" id="btnCloseStats">&#10005;</button>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE MODAL -->
+  <div class="modal-overlay" id="archiveOverlay" style="display:none">
+    <div class="modal glass" id="archivePanel">
+      <div class="modal-header">
+        <h2>Archived Tasks</h2>
+        <button class="btn-icon-sm" id="btnCloseArchive">&#10005;</button>
+      </div>
+      <div id="archiveList" class="archive-list"></div>
+      <button class="btn-clear-archive" id="btnClearArchive">Clear All Archived</button>
+    </div>
+  </div>
+
+  <!-- TASK DETAIL MODAL -->
+  <div class="modal-overlay" id="detailOverlay" style="display:none">
+    <div class="modal glass" id="detailPanel">
+      <div class="modal-header">
+        <h2>Edit Task</h2>
+        <button class="btn-icon-sm" id="btnCloseDetail">&#10005;</button>
+      </div>
+      <div class="detail-form">
+        <label>Task</label>
+        <input type="text" id="detailText" maxlength="200" />
+        <label>Due Date</label>
+        <input type="date" id="detailDate" />
+        <label>Priority</label>
+        <select id="detailPriority">
+          <option value="1">P1 Lowest</option>
+          <option value="2">P2 Low</option>
+          <option value="3">P3 Medium</option>
+          <option value="4">P4 High</option>
+          <option value="5">P5 Critical</option>
+        </select>
+        <label>Label</label>
+        <select id="detailTag">
+          <option value="">No label</option>
+          <option value="work">Work</option>
+          <option value="personal">Personal</option>
+          <option value="health">Health</option>
+          <option value="finance">Finance</option>
+          <option value="study">Study</option>
+          <option value="project">Project</option>
+        </select>
+        <label>Notes</label>
+        <textarea id="detailNotes" rows="3" maxlength="300" placeholder="Add notes..."></textarea>
+        <label>Quadrant</label>
+        <select id="detailQuadrant">
+          <option value="q1">Do First</option>
+          <option value="q2">Schedule</option>
+          <option value="q3">Delegate</option>
+          <option value="q4">Eliminate</option>
+        </select>
+        <div class="detail-actions">
+          <button class="btn-save-detail" id="btnSaveDetail">Save Changes</button>
+          <button class="btn-delete-detail" id="btnDeleteDetail">Delete Task</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT MODAL -->
+  <div class="modal-overlay" id="exportOverlay" style="display:none">
+    <div class="modal glass" id="exportPanel">
+      <div class="modal-header">
+        <h2>Export</h2>
+        <button class="btn-icon-sm" id="btnCloseExport">&#10005;</button>
+      </div>
+      <div class="export-options">
+        <button class="btn-export-opt" id="btnCopyText">Copy as Text</button>
+        <button class="btn-export-opt" id="btnPrintPDF">Print / Save PDF</button>
+        <button class="btn-export-opt" id="btnExportJSON">Export JSON</button>
+      </div>
+      <pre id="exportPreview" class="export-preview"></pre>
+    </div>
+  </div>
+
+  <!-- FOOTER BAR -->
+  <div class="footer-bar glass">
+    <span id="footerTotal">0 tasks</span>
+    <span id="footerCompleted">0 completed</span>
+    <span id="footerOverdue">0 overdue</span>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
